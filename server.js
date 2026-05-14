@@ -39,17 +39,21 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const path = require('path');
+
 const resumeRoutes = require('./src/server/routes/resume');
 const authRoutes = require('./src/server/routes/auth');
 
 const app = express();
 
-// Middleware
-// app.use(cors({ origin: 'http://localhost:3000' }));
+// --------------------
+// MIDDLEWARE
+// --------------------
 app.use(cors());
 app.use(express.json());
 
-// PostgreSQL connection
+// --------------------
+// POSTGRESQL CONNECTION
+// --------------------
 const pool = new Pool({
   user: process.env.PGUSER || 'postgres',
   host: process.env.PGHOST || 'localhost',
@@ -58,13 +62,19 @@ const pool = new Pool({
   port: process.env.PGPORT || 5432,
 });
 
-// Test connection
+// Test DB connection
 pool.connect()
   .then(() => console.log('PostgreSQL connected'))
   .catch(err => console.error('PostgreSQL connection error:', err));
 
+// Make pool accessible in routes (optional but useful)
+app.use((req, res, next) => {
+  req.db = pool;
+  next();
+});
+
 // --------------------
-// REGISTER ROUTE
+// AUTH ROUTES (direct)
 // --------------------
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -74,31 +84,30 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Check if user exists
-    const userCheck = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const userCheck = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+
     if (userCheck.rows.length > 0) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Save user
     await pool.query(
       'INSERT INTO users (email, password) VALUES ($1, $2)',
       [email, hashedPassword]
     );
 
     return res.status(201).json({ message: 'Account created successfully' });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// --------------------
-// LOGIN ROUTE
-// --------------------
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -107,38 +116,54 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Find user
-    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const userResult = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+
     if (userResult.rows.length === 0) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     const user = userResult.rows[0];
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     return res.status(200).json({ message: 'Login successful' });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Auth routes
+// --------------------
+// ROUTES (modular)
+// --------------------
 app.use('/api/auth', authRoutes);
-
-// Resume routes
 app.use('/api/resume', resumeRoutes);
 
-// Start server
-app.use(express.static(path.join(__dirname, '../../build')));
+// --------------------
+// STATIC FRONTEND (React build)
+// --------------------
+const buildPath = path.join(__dirname, '../../build');
 
-app.get('/*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../build', 'index.html'));
+app.use(express.static(buildPath));
+
+// ✅ FIXED WILDCARD ROUTE (IMPORTANT)
+app.get('/:path(*)', (req, res) => {
+  res.sendFile(path.join(buildPath, 'index.html'));
 });
+
+// --------------------
+// START SERVER
+// --------------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
