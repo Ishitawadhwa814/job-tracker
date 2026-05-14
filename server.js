@@ -154,8 +154,8 @@ const buildPath = path.join(__dirname, '../../build');
 
 app.use(express.static(buildPath));
 
-// ✅ FIXED WILDCARD ROUTE (IMPORTANT)
-app.get('/:path(*)', (req, res) => {
+// SAFE fallback (NO ROUTE PARSING AT ALL)
+app.use((req, res) => {
   res.sendFile(path.join(buildPath, 'index.html'));
 });
 
