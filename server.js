@@ -38,13 +38,15 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
+const path = require('path');
 const resumeRoutes = require('./src/server/routes/resume');
 const authRoutes = require('./src/server/routes/auth');
 
 const app = express();
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000' }));
+// app.use(cors({ origin: 'http://localhost:3000' }));
+app.use(cors());
 app.use(express.json());
 
 // PostgreSQL connection
@@ -133,5 +135,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
 
 // Start server
+app.use(express.static(path.join(__dirname, '../../build')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../build', 'index.html'));
+});
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
