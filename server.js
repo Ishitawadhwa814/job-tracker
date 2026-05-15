@@ -58,8 +58,11 @@ const pool = new Pool({
   user: process.env.PGUSER || 'postgres',
   host: process.env.PGHOST || 'localhost',
   database: process.env.PGDATABASE || 'tracker_job',
-  password: process.env.PGPASSWORD || 'H@rshu79733',
+  password: process.env.PGPASSWORD || '',
   port: process.env.PGPORT || 5432,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 // Test DB connection
@@ -67,7 +70,7 @@ pool.connect()
   .then(() => console.log('PostgreSQL connected'))
   .catch(err => console.error('PostgreSQL connection error:', err));
 
-// Make pool accessible in routes (optional but useful)
+// Make DB accessible in routes
 app.use((req, res, next) => {
   req.db = pool;
   next();
@@ -81,7 +84,9 @@ app.post('/api/auth/register', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+      return res.status(400).json({
+        message: 'Email and password are required',
+      });
     }
 
     const userCheck = await pool.query(
@@ -90,7 +95,9 @@ app.post('/api/auth/register', async (req, res) => {
     );
 
     if (userCheck.rows.length > 0) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({
+        message: 'User already exists',
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -100,11 +107,16 @@ app.post('/api/auth/register', async (req, res) => {
       [email, hashedPassword]
     );
 
-    return res.status(201).json({ message: 'Account created successfully' });
+    return res.status(201).json({
+      message: 'Account created successfully',
+    });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+
+    res.status(500).json({
+      message: 'Server error',
+    });
   }
 });
 
@@ -113,7 +125,9 @@ app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+      return res.status(400).json({
+        message: 'Email and password are required',
+      });
     }
 
     const userResult = await pool.query(
@@ -122,51 +136,50 @@ app.post('/api/auth/login', async (req, res) => {
     );
 
     if (userResult.rows.length === 0) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({
+        message: 'Invalid credentials',
+      });
     }
 
     const user = userResult.rows[0];
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
 
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({
+        message: 'Invalid credentials',
+      });
     }
 
-    return res.status(200).json({ message: 'Login successful' });
+    return res.status(200).json({
+      message: 'Login successful',
+    });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+
+    res.status(500).json({
+      message: 'Server error',
+    });
   }
 });
 
 // --------------------
-// ROUTES (modular)
+// MODULAR ROUTES
 // --------------------
 app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
 
 // --------------------
-// STATIC FRONTEND (React build)
+// REACT FRONTEND
 // --------------------
-// const buildPath = path.join(__dirname, '../../build');
+const buildPath = path.join(__dirname, 'build');
 
-// app.use(express.static(buildPath));
+app.use(express.static(buildPath));
 
-// app.use(express.static(path.join(__dirname, "dist")));
-
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "dist", "index.html"));
-// });
-
-app.use(express.static(path.join(__dirname, "dist")));
-
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
-
-// SAFE fallback (NO ROUTE PARSING AT ALL)
 app.use((req, res) => {
   res.sendFile(path.join(buildPath, 'index.html'));
 });
