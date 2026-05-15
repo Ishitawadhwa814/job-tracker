@@ -11,11 +11,11 @@
 //   const [currentUser, setCurrentUser] = useState(null);
 
 //   async function signup(email, password) {
-//     await axios.post("http://localhost:5000/api/auth/signup", { email, password });
+//     await axios.post("https://job-tracker-6j9b.onrender.com/api/auth/signup", { email, password });
 //   }
 
 //   async function login(email, password) {
-//     const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
+//     const res = await axios.post("https://job-tracker-6j9b.onrender.com/api/auth/login", { email, password });
 //     localStorage.setItem("token", res.data.token);
 //     setCurrentUser({ email });
 //   }
@@ -59,11 +59,11 @@
 //   const [currentUser, setCurrentUser] = useState(null);
 
 //   async function signup(email, password) {
-//     await axios.post("http://localhost:5000/api/auth/signup", { email, password });
+//     await axios.post("https://job-tracker-6j9b.onrender.com/api/auth/signup", { email, password });
 //   }
 
 //   async function login(email, password) {
-//     const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
+//     const res = await axios.post("https://job-tracker-6j9b.onrender.com/api/auth/login", { email, password });
 //     localStorage.setItem("token", res.data.token);
 //     setCurrentUser({ email });
 //   }

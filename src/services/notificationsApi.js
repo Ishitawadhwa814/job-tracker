@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:5000/api/notifications";
+const BASE_URL = "https://job-tracker-6j9b.onrender.com/api/notifications";
 
 async function handleResponse(res) {
   let data = null;

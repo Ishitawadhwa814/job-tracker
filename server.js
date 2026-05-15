@@ -32,7 +32,7 @@
 // });
 
 // // Start server
-// app.listen(5000, () => console.log("✅ Server running on http://localhost:5000"));
+// app.listen(5000, () => console.log("✅ Server running on https://job-tracker-6j9b.onrender.com"));
 // server.js
 const express = require('express');
 const cors = require('cors');
