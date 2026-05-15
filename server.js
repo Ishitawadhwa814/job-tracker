@@ -150,9 +150,15 @@ app.use('/api/resume', resumeRoutes);
 // --------------------
 // STATIC FRONTEND (React build)
 // --------------------
-const buildPath = path.join(__dirname, '../../build');
+// const buildPath = path.join(__dirname, '../../build');
 
-app.use(express.static(buildPath));
+// app.use(express.static(buildPath));
+
+app.use(express.static(path.join(__dirname, "dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
 
 // SAFE fallback (NO ROUTE PARSING AT ALL)
 app.use((req, res) => {
